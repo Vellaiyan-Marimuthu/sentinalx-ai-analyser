@@ -3,19 +3,21 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  AiAnalysisTimeoutException,
+  AiProviderError,
+  AiProviderException,
+  AiTimeoutError,
   AnalysisNotFoundException,
+  InvalidAiResponseException,
   InvalidAnalysisRequestException,
 } from '../../../common/exceptions/analyzer.exceptions';
 import { AnalyzeClusterDto } from '../dto/analyze-cluster.dto';
 import { AiAnalysisEntity } from '../entities/ai-analysis.entity';
 import { AiAnalysisStatus } from '../enums/ai-analysis-status.enum';
-import { AIAnalysisApiResponse } from '../types/ai-analysis-result';
+import { AIAnalysisResult } from '../types/ai-analysis-result';
 import { AIAnalysisContext } from '../types/ai-analysis-context';
 import { AiContextBuilderService } from './ai-context-builder.service';
 import { AiProviderService } from './ai-provider.service';
-
-const FALLBACK_MESSAGE =
-  'AI analysis unavailable. Deterministic attack story remains available.';
 
 @Injectable()
 export class AiAnalyzerService {
@@ -30,11 +32,10 @@ export class AiAnalyzerService {
   ) {}
 
   async analyze(
-    clusterId: string,
     applicationId: string,
     payload: AnalyzeClusterDto,
-  ): Promise<AIAnalysisApiResponse> {
-    const context = this.contextBuilder.build(clusterId, applicationId, payload);
+  ): Promise<AIAnalysisResult> {
+    const context = this.contextBuilder.build(applicationId, payload);
     return this.runAnalysis(context);
   }
 
@@ -42,9 +43,9 @@ export class AiAnalyzerService {
     clusterId: string,
     applicationId: string,
     payload?: AnalyzeClusterDto,
-  ): Promise<AIAnalysisApiResponse> {
+  ): Promise<AIAnalysisResult> {
     if (payload) {
-      return this.analyze(clusterId, applicationId, payload);
+      return this.analyze(applicationId, payload);
     }
 
     const previous = await this.findLatest(clusterId, applicationId);
@@ -57,15 +58,20 @@ export class AiAnalyzerService {
     return this.runAnalysis(previous.inputSnapshot);
   }
 
-  async getLatest(clusterId: string, applicationId: string): Promise<AIAnalysisApiResponse> {
+  async getLatest(clusterId: string, applicationId: string): Promise<AIAnalysisResult> {
     const latest = await this.findLatest(clusterId, applicationId);
     if (!latest) {
       throw new AnalysisNotFoundException(clusterId);
     }
-    return toApiResponse(latest);
+    if (latest.status !== AiAnalysisStatus.COMPLETED || !latest.outputSnapshot) {
+      throw new AiProviderException(
+        'Latest AI analysis is unavailable. Deterministic attack story remains available on SentinelX.',
+      );
+    }
+    return latest.outputSnapshot;
   }
 
-  private async runAnalysis(context: AIAnalysisContext): Promise<AIAnalysisApiResponse> {
+  private async runAnalysis(context: AIAnalysisContext): Promise<AIAnalysisResult> {
     const provider = this.configService.get<string>('ai.provider') ?? 'openai';
     const model = this.configService.get<string>('ai.model') ?? 'gpt-4o';
     const promptVersion = this.configService.get<string>('ai.promptVersion') ?? '1.0';
@@ -90,33 +96,23 @@ export class AiAnalyzerService {
 
     try {
       const analysis = await this.aiProvider.analyze(context);
-      if (context.eventsTruncated) {
-        analysis.limitations = [
-          ...analysis.limitations,
-          'Representative events were limited before being sent to the model.',
-        ];
-      }
-
       record.status = AiAnalysisStatus.COMPLETED;
-      record.model = this.configService.get<string>('ai.model') ?? record.model;
       record.executiveSummary = analysis.executiveSummary;
-      record.whatHappened = analysis.whatHappened;
-      record.whyItMatters = analysis.whyItMatters;
-      record.evidenceAssessment = analysis.evidenceAssessment;
-      record.investigation = analysis.investigation;
+      record.attackExplanation = analysis.attackExplanation;
+      record.riskExplanation = analysis.riskExplanation;
+      record.investigationSteps = analysis.investigationSteps;
       record.recommendations = analysis.recommendations;
-      record.limitations = analysis.limitations;
       record.outputSnapshot = analysis;
       await this.analyses.save(record);
+      return analysis;
     } catch (error) {
       this.logger.error(
         `AI analysis failed for cluster ${context.cluster.id}: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
       record.status = AiAnalysisStatus.FAILED;
       await this.analyses.save(record);
+      throw toHttpError(error);
     }
-
-    return toApiResponse(record);
   }
 
   private findLatest(
@@ -130,29 +126,17 @@ export class AiAnalyzerService {
   }
 }
 
-function toApiResponse(record: AiAnalysisEntity): AIAnalysisApiResponse {
-  if (record.status !== AiAnalysisStatus.COMPLETED) {
-    return {
-      id: record.id,
-      clusterId: record.clusterId,
-      status: record.status,
-      analysis: null,
-      fallback: { message: FALLBACK_MESSAGE },
-    };
+function toHttpError(error: unknown): Error {
+  if (error instanceof AiTimeoutError) {
+    return new AiAnalysisTimeoutException();
   }
-
-  return {
-    id: record.id,
-    clusterId: record.clusterId,
-    status: record.status,
-    analysis: {
-      executiveSummary: record.executiveSummary ?? '',
-      whatHappened: record.whatHappened ?? '',
-      whyItMatters: record.whyItMatters ?? '',
-      evidenceAssessment: record.evidenceAssessment ?? [],
-      investigation: record.investigation ?? [],
-      recommendations: record.recommendations ?? [],
-      limitations: record.limitations ?? [],
-    },
-  };
+  if (error instanceof AiProviderError) {
+    return new AiProviderException(error.message);
+  }
+  if (error instanceof Error && /malformed JSON|schema-invalid|invalid analysis/i.test(error.message)) {
+    return new InvalidAiResponseException(error.message);
+  }
+  return new AiProviderException(
+    error instanceof Error ? error.message : 'AI analysis provider unavailable',
+  );
 }

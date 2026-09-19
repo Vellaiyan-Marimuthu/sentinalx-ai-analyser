@@ -23,7 +23,7 @@ x-api-key: APPLICATION_API_KEY
 Analyze a persisted cluster:
 
 ```http
-POST /api/v1/ai-analyzer/clusters/:clusterId/analyze
+POST /api/v1/analyze
 ```
 
 Get the latest analysis:
@@ -64,13 +64,12 @@ APPLICATION_ID=app_sentinelx
 Structured JSON only:
 
 - Executive summary
-- What happened
-- Why it matters
-- Evidence assessment
+- Attack explanation
+- Risk explanation
 - Investigation steps
-- Advisory recommendations
-- Limitations
+- Recommendations
+- Suggested policy (advisory, nullable)
 
-If the model fails, the Attack Cluster stays usable and the API returns `status: FAILED` with a fallback pointing back to the deterministic attack story.
+If the model fails, the API returns a clean error. The Attack Cluster on SentinelX stays usable.
 
 Analyses are persisted in SQLite (`data/sentinelx.sqlite`) and scoped by `applicationId`.

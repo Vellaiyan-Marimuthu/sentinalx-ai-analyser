@@ -8,7 +8,7 @@ export default () => ({
     maxRetries: parseInt(process.env.AI_MAX_RETRIES ?? '1', 10),
     promptVersion: process.env.PROMPT_VERSION ?? '1.0',
     analysisVersion: '1.0',
-    maxRepresentativeEvents: 20,
+    maxRepresentativeEvents: 10,
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY ?? '',

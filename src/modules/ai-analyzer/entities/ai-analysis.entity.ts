@@ -9,11 +9,6 @@ import {
 } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { AiAnalysisStatus } from '../enums/ai-analysis-status.enum';
-import {
-  AIEvidenceAssessment,
-  AIInvestigationStep,
-  AIRecommendation,
-} from '../types/ai-recommendation';
 import { AIAnalysisContext } from '../types/ai-analysis-context';
 import { AIAnalysisResult } from '../types/ai-analysis-result';
 
@@ -44,23 +39,17 @@ export class AiAnalysisEntity {
   @Column({ type: 'text', nullable: true })
   executiveSummary!: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  whatHappened!: string | null;
+  @Column({ name: 'whatHappened', type: 'text', nullable: true })
+  attackExplanation!: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  whyItMatters!: string | null;
+  @Column({ name: 'whyItMatters', type: 'text', nullable: true })
+  riskExplanation!: string | null;
 
-  @Column({ type: 'simple-json', nullable: true })
-  evidenceAssessment!: AIEvidenceAssessment[] | null;
-
-  @Column({ type: 'simple-json', nullable: true })
-  investigation!: AIInvestigationStep[] | null;
+  @Column({ name: 'investigation', type: 'simple-json', nullable: true })
+  investigationSteps!: string[] | null;
 
   @Column({ type: 'simple-json', nullable: true })
-  recommendations!: AIRecommendation[] | null;
-
-  @Column({ type: 'simple-json', nullable: true })
-  limitations!: string[] | null;
+  recommendations!: string[] | null;
 
   @Column({ type: 'simple-json', nullable: true })
   inputSnapshot!: AIAnalysisContext | null;

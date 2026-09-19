@@ -58,11 +58,7 @@ export class OpenAIProvider implements AIProvider {
           throw new AiProviderError('OpenAI returned an empty completion');
         }
 
-        const parsed = this.parser.parse(content);
-        return {
-          ...parsed,
-          generatedAt: parsed.generatedAt || new Date().toISOString(),
-        };
+        return this.parser.parse(content);
       } catch (error) {
         lastError = toProviderError(error);
         const retryable = isRetryable(lastError);

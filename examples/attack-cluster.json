@@ -7,20 +7,26 @@
     "status": "OPEN"
   },
   "target": {
+    "apiId": "api-uuid",
+    "method": "GET",
     "api": "/api/search",
     "operationType": "SEARCH",
     "sensitivity": "NORMAL",
     "exposure": "PUBLIC"
   },
   "timeline": {
-    "startTime": "2026-09-19T01:02:00Z",
-    "endTime": "2026-09-19T01:06:00Z"
+    "startTime": "2026-09-19T01:02:00.000Z",
+    "endTime": "2026-09-19T01:06:00.000Z"
   },
   "metrics": {
     "requestCount": 16,
     "ipCount": 5,
     "userCount": 0,
     "apiCount": 1
+  },
+  "sourceBreakdown": {
+    "agentEventCount": 0,
+    "wafEventCount": 16
   },
   "signals": ["WAF_XSS"],
   "evidence": [
@@ -40,28 +46,21 @@
     "timelineSummary": "Activity occurred between 01:02 and 01:06 UTC.",
     "evidenceSummary": [
       "16 XSS-related WAF events",
-      "5 unique source IPs",
-      "14 blocked and 2 not blocked"
+      "5 unique source IPs"
     ],
     "recommendedInvestigation": [
-      "Review the two non-blocked requests",
-      "Inspect output encoding on /api/search"
+      "Review the two non-blocked requests"
     ]
   },
   "representativeEvents": [
     {
       "source": "AWS_WAF",
-      "occurredAt": "2026-09-19T01:02:12Z",
+      "occurredAt": "2026-09-19T01:02:12.000Z",
+      "method": "GET",
       "path": "/api/search",
       "action": "BLOCKED",
-      "signal": "WAF_XSS"
-    },
-    {
-      "source": "AWS_WAF",
-      "occurredAt": "2026-09-19T01:05:41Z",
-      "path": "/api/search",
-      "action": "ALLOWED",
-      "signal": "WAF_XSS"
+      "signal": "WAF_RULE_MATCH",
+      "wafRuleId": "AWS-AWSManagedRulesCommonRuleSet"
     }
   ]
 }

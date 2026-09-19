@@ -1,43 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { z, ZodError } from 'zod';
-import { AIAnalysisResult } from '../types/ai-analysis-result';
+import { AIAnalysisResult, SuggestedPolicy } from '../types/ai-analysis-result';
+
+const policySchema = z
+  .object({
+    type: z.enum(['RATE_LIMIT', 'BLOCK_IP', 'CHALLENGE', 'ALERT']).nullable(),
+    scope: z.string().optional(),
+    reason: z.string().optional(),
+  })
+  .nullable();
 
 const analysisSchema = z.object({
-  analysisVersion: z.string().min(1).optional(),
   executiveSummary: z.string().min(1),
-  whatHappened: z.string().min(1),
-  whyItMatters: z.string().min(1),
-  evidenceAssessment: z
-    .array(
-      z.object({
-        fact: z.string().min(1),
-        interpretation: z.string().min(1),
-      }),
-    )
-    .min(1),
-  investigation: z
-    .array(
-      z.object({
-        priority: z.string().min(1),
-        action: z.string().min(1),
-        reason: z.string().min(1),
-      }),
-    )
-    .min(1),
-  recommendations: z.array(
-    z.object({
-      type: z.string().min(1),
-      target: z.string().min(1),
-      reason: z.string().min(1),
-      confidence: z.number().min(0).max(1).optional(),
-    }),
-  ),
-  limitations: z.array(z.string()),
-  generatedAt: z.string().optional(),
+  attackExplanation: z.string().min(1),
+  riskExplanation: z.string().min(1),
+  investigationSteps: z.array(z.string().min(1)).min(1),
+  recommendations: z.array(z.string().min(1)).min(1),
+  suggestedPolicy: policySchema.optional(),
 });
 
 const EXECUTION_CLAIM =
   /\b(i (have|just) (blocked|deployed|executed|enforced)|automatically (blocked|deployed)|waf rule (was|has been) (deployed|applied))\b/i;
+
+const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
 
 @Injectable()
 export class AiResponseParserService {
@@ -63,15 +48,12 @@ export class AiResponseParserService {
       }
 
       return {
-        analysisVersion: result.analysisVersion ?? '1.0',
         executiveSummary: result.executiveSummary,
-        whatHappened: result.whatHappened,
-        whyItMatters: result.whyItMatters,
-        evidenceAssessment: result.evidenceAssessment,
-        investigation: result.investigation,
+        attackExplanation: result.attackExplanation,
+        riskExplanation: result.riskExplanation,
+        investigationSteps: result.investigationSteps,
         recommendations: result.recommendations,
-        limitations: result.limitations,
-        generatedAt: result.generatedAt ?? new Date().toISOString(),
+        suggestedPolicy: sanitizeSuggestedPolicy(result.suggestedPolicy ?? null),
       };
     } catch (error) {
       if (error instanceof ZodError) {
@@ -80,6 +62,26 @@ export class AiResponseParserService {
       throw error;
     }
   }
+}
+
+function sanitizeSuggestedPolicy(policy: SuggestedPolicy | null): SuggestedPolicy | null {
+  if (!policy || !policy.type) {
+    return policy?.type === null ? { type: null, scope: policy.scope, reason: policy.reason } : null;
+  }
+
+  if (policy.type === 'BLOCK_IP' && policy.scope && looksLikeIp(policy.scope)) {
+    return {
+      type: 'ALERT',
+      reason:
+        'A block-IP policy was not proposed because raw IP addresses are not supplied to the analyzer.',
+    };
+  }
+
+  return policy;
+}
+
+function looksLikeIp(value: string): boolean {
+  return IPV4.test(value) || value.includes(':');
 }
 
 function stripMarkdownFence(raw: string): string {

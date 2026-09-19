@@ -7,10 +7,12 @@ export interface AIAnalysisCluster {
 }
 
 export interface AIAnalysisTarget {
-  api: string;
-  operationType: string;
-  sensitivity: string;
-  exposure: string;
+  apiId?: string;
+  method?: string;
+  api?: string;
+  operationType?: string;
+  sensitivity?: string;
+  exposure?: string;
 }
 
 export interface AIAnalysisTimeline {
@@ -25,10 +27,15 @@ export interface AIAnalysisMetrics {
   apiCount: number;
 }
 
-export interface AIAnalysisMetadata {
-  blockedCount: number;
-  nonBlockedCount: number;
+export interface AISourceBreakdown {
+  agentEventCount: number;
   wafEventCount: number;
+}
+
+export interface AIAnalysisMetadata {
+  blockedCount?: number;
+  nonBlockedCount?: number;
+  wafEventCount?: number;
 }
 
 export interface AIAttackStory {
@@ -42,9 +49,11 @@ export interface AIAttackStory {
 export interface AIRepresentativeEvent {
   source: string;
   occurredAt: string;
-  path: string;
-  action: string;
-  signal: string;
+  method?: string;
+  path?: string;
+  action?: string;
+  signal?: string;
+  wafRuleId?: string;
 }
 
 export interface AIAnalysisContext {
@@ -52,6 +61,7 @@ export interface AIAnalysisContext {
   target: AIAnalysisTarget;
   timeline: AIAnalysisTimeline;
   metrics: AIAnalysisMetrics;
+  sourceBreakdown: AISourceBreakdown;
   signals: string[];
   evidence: string[];
   metadata: AIAnalysisMetadata;

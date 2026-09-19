@@ -1,27 +1,16 @@
-import {
-  AIEvidenceAssessment,
-  AIInvestigationStep,
-  AIRecommendation,
-} from './ai-recommendation';
+export type SuggestedPolicyType = 'RATE_LIMIT' | 'BLOCK_IP' | 'CHALLENGE' | 'ALERT';
 
-export interface AIAnalysisResult {
-  analysisVersion: string;
-  executiveSummary: string;
-  whatHappened: string;
-  whyItMatters: string;
-  evidenceAssessment: AIEvidenceAssessment[];
-  investigation: AIInvestigationStep[];
-  recommendations: AIRecommendation[];
-  limitations: string[];
-  generatedAt: string;
+export interface SuggestedPolicy {
+  type: SuggestedPolicyType | null;
+  scope?: string;
+  reason?: string;
 }
 
-export interface AIAnalysisApiResponse {
-  id: string;
-  clusterId: string;
-  status: string;
-  analysis: Omit<AIAnalysisResult, 'analysisVersion' | 'generatedAt'> | null;
-  fallback?: {
-    message: string;
-  };
+export interface AIAnalysisResult {
+  executiveSummary: string;
+  attackExplanation: string;
+  riskExplanation: string;
+  investigationSteps: string[];
+  recommendations: string[];
+  suggestedPolicy: SuggestedPolicy | null;
 }

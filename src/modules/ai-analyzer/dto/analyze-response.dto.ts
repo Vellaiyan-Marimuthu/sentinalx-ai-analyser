@@ -1,85 +1,61 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class EvidenceAssessmentDto {
-  @ApiProperty({ example: '16 XSS-related requests were detected targeting /api/search.' })
-  fact!: string;
-
-  @ApiProperty({
-    example: 'This indicates coordinated probing of the public search endpoint.',
+export class SuggestedPolicyDto {
+  @ApiPropertyOptional({
+    example: 'RATE_LIMIT',
+    enum: ['RATE_LIMIT', 'BLOCK_IP', 'CHALLENGE', 'ALERT', null],
+    nullable: true,
   })
-  interpretation!: string;
+  type!: 'RATE_LIMIT' | 'BLOCK_IP' | 'CHALLENGE' | 'ALERT' | null;
+
+  @ApiPropertyOptional({ example: '/api/search' })
+  scope?: string;
+
+  @ApiPropertyOptional({
+    example: 'Repeated XSS-related traffic targeted the same public endpoint.',
+  })
+  reason?: string;
 }
 
-export class InvestigationStepDto {
-  @ApiProperty({ example: 'HIGH', enum: ['HIGH', 'MEDIUM', 'LOW'] })
-  priority!: string;
-
-  @ApiProperty({ example: 'Review application logs for the two non-blocked requests.' })
-  action!: string;
-
-  @ApiProperty({ example: 'These requests were not blocked by the WAF.' })
-  reason!: string;
-}
-
-export class RecommendationDto {
-  @ApiProperty({ example: 'WAF_RULE_REVIEW' })
-  type!: string;
-
-  @ApiProperty({ example: '/api/search' })
-  target!: string;
-
-  @ApiProperty({ example: 'Two XSS-related requests were not blocked.' })
-  reason!: string;
-
-  @ApiPropertyOptional({ example: 0.82 })
-  confidence?: number;
-}
-
-export class AnalysisBodyDto {
-  @ApiProperty()
+export class AnalyzeResponseDto {
+  @ApiProperty({
+    example: 'A coordinated XSS probing campaign targeted the public search endpoint.',
+  })
   executiveSummary!: string;
 
-  @ApiProperty()
-  whatHappened!: string;
-
-  @ApiProperty()
-  whyItMatters!: string;
-
-  @ApiProperty({ type: [EvidenceAssessmentDto] })
-  evidenceAssessment!: EvidenceAssessmentDto[];
-
-  @ApiProperty({ type: [InvestigationStepDto] })
-  investigation!: InvestigationStepDto[];
-
-  @ApiProperty({ type: [RecommendationDto] })
-  recommendations!: RecommendationDto[];
-
-  @ApiProperty({ type: [String] })
-  limitations!: string[];
-}
-
-export class AnalysisFallbackDto {
   @ApiProperty({
-    example: 'AI analysis unavailable. Deterministic attack story remains available.',
+    example:
+      'Multiple XSS-related WAF matches targeted the same endpoint within a short period.',
   })
-  message!: string;
-}
+  attackExplanation!: string;
 
-export class AnalysisApiResponseDto {
-  @ApiProperty({ example: 'fe807091-4805-4649-bbbc-fb7aff56ef2b' })
-  id!: string;
+  @ApiProperty({
+    example:
+      'Two related requests were not blocked by WAF. This does not establish successful exploitation, but those requests warrant follow-up investigation.',
+  })
+  riskExplanation!: string;
 
-  @ApiProperty({ example: 'cluster-uuid' })
-  clusterId!: string;
+  @ApiProperty({
+    type: [String],
+    example: [
+      'Review application activity following the non-blocked requests.',
+      'Inspect related authentication and session activity.',
+      'Review output encoding on the affected endpoint.',
+    ],
+  })
+  investigationSteps!: string[];
 
-  @ApiProperty({ example: 'COMPLETED', enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'] })
-  status!: string;
+  @ApiProperty({
+    type: [String],
+    example: [
+      'Review XSS defenses on /api/search.',
+      'Consider rate limiting repeated attack-related traffic.',
+    ],
+  })
+  recommendations!: string[];
 
-  @ApiPropertyOptional({ type: AnalysisBodyDto, nullable: true })
-  analysis!: AnalysisBodyDto | null;
-
-  @ApiPropertyOptional({ type: AnalysisFallbackDto })
-  fallback?: AnalysisFallbackDto;
+  @ApiPropertyOptional({ type: SuggestedPolicyDto, nullable: true })
+  suggestedPolicy!: SuggestedPolicyDto | null;
 }
 
 export class ErrorResponseDto {

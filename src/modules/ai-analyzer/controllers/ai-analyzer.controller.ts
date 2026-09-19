@@ -15,7 +15,8 @@ import {
   AuthenticatedRequest,
 } from '../../../common/guards/application-api-key.guard';
 import { AnalyzeClusterDto } from '../dto/analyze-cluster.dto';
-import { AnalysisApiResponseDto, ErrorResponseDto } from '../dto/analyze-response.dto';
+import { XSS_ANALYZE_EXAMPLE } from '../dto/analyze-examples';
+import { AnalyzeResponseDto, ErrorResponseDto } from '../dto/analyze-response.dto';
 import { AiAnalyzerService } from '../services/ai-analyzer.service';
 
 @ApiTags('AI Analyzer')
@@ -28,13 +29,12 @@ export class AiAnalyzerController {
   @Post(':clusterId/analyze')
   @HttpCode(200)
   @ApiOperation({
-    summary: 'Analyze an Attack Cluster',
-    description:
-      'Builds a controlled AI context from the persisted cluster evidence and returns a structured investigation analysis. Does not change severity, confidence, or enforce policy.',
+    summary: 'Analyze by cluster path (compatibility)',
+    description: 'Same contract as POST /analyze. Prefer POST /api/v1/analyze.',
   })
   @ApiParam({ name: 'clusterId', example: 'cluster-uuid' })
-  @ApiBody({ type: AnalyzeClusterDto })
-  @ApiResponse({ status: 200, type: AnalysisApiResponseDto })
+  @ApiBody({ type: AnalyzeClusterDto, examples: { xss: { value: XSS_ANALYZE_EXAMPLE } } })
+  @ApiResponse({ status: 200, type: AnalyzeResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto })
   @ApiResponse({ status: 401, type: ErrorResponseDto })
   analyze(
@@ -42,16 +42,14 @@ export class AiAnalyzerController {
     @Body() payload: AnalyzeClusterDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.aiAnalyzerService.analyze(clusterId, request.applicationId, payload);
+    payload.cluster.id = payload.cluster.id || clusterId;
+    return this.aiAnalyzerService.analyze(request.applicationId, payload);
   }
 
   @Get(':clusterId')
-  @ApiOperation({
-    summary: 'Get the latest analysis',
-    description: 'Returns the most recent AI analysis for the cluster, scoped by applicationId.',
-  })
+  @ApiOperation({ summary: 'Get the latest analysis for a cluster' })
   @ApiParam({ name: 'clusterId', example: 'cluster-uuid' })
-  @ApiResponse({ status: 200, type: AnalysisApiResponseDto })
+  @ApiResponse({ status: 200, type: AnalyzeResponseDto })
   @ApiResponse({ status: 401, type: ErrorResponseDto })
   @ApiResponse({ status: 404, type: ErrorResponseDto })
   getLatest(@Param('clusterId') clusterId: string, @Req() request: AuthenticatedRequest) {
@@ -62,12 +60,11 @@ export class AiAnalyzerController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Reanalyze a cluster',
-    description:
-      'Regenerates analysis from a new payload, or from the last stored cluster snapshot if no body is sent.',
+    description: 'Uses a new payload or the last stored snapshot.',
   })
   @ApiParam({ name: 'clusterId', example: 'cluster-uuid' })
   @ApiBody({ type: AnalyzeClusterDto, required: false })
-  @ApiResponse({ status: 200, type: AnalysisApiResponseDto })
+  @ApiResponse({ status: 200, type: AnalyzeResponseDto })
   @ApiResponse({ status: 400, type: ErrorResponseDto })
   @ApiResponse({ status: 401, type: ErrorResponseDto })
   async reanalyze(

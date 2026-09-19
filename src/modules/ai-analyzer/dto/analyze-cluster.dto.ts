@@ -18,10 +18,10 @@ import {
 const SEVERITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
 
 export class ClusterInputDto {
-  @ApiPropertyOptional({ example: 'cluster-uuid' })
-  @IsOptional()
-  @IsString()
-  id?: string;
+  @ApiProperty({ example: 'cluster-uuid' })
+  @IsString({ message: 'Required field cluster.id is missing' })
+  @IsNotEmpty({ message: 'Required field cluster.id is missing' })
+  id!: string;
 
   @ApiProperty({ example: 'XSS_CAMPAIGN' })
   @IsString({ message: 'Required field cluster.type is missing' })
@@ -40,40 +40,50 @@ export class ClusterInputDto {
   @Max(1)
   confidence!: number;
 
-  @ApiPropertyOptional({ example: 'OPEN' })
-  @IsOptional()
-  @IsString()
-  status?: string;
+  @ApiProperty({ example: 'OPEN' })
+  @IsString({ message: 'Required field cluster.status is missing' })
+  @IsNotEmpty({ message: 'Required field cluster.status is missing' })
+  status!: string;
 }
 
 export class TargetInputDto {
-  @ApiProperty({ example: '/api/search' })
-  @IsString({ message: 'Required field target.api is missing' })
-  @IsNotEmpty({ message: 'Required field target.api is missing' })
-  api!: string;
+  @ApiPropertyOptional({ example: 'api-uuid' })
+  @IsOptional()
+  @IsString()
+  apiId?: string;
 
-  @ApiProperty({ example: 'SEARCH' })
-  @IsString({ message: 'Required field target.operationType is missing' })
-  @IsNotEmpty({ message: 'Required field target.operationType is missing' })
-  operationType!: string;
+  @ApiPropertyOptional({ example: 'GET' })
+  @IsOptional()
+  @IsString()
+  method?: string;
 
-  @ApiProperty({ example: 'NORMAL' })
-  @IsString({ message: 'Required field target.sensitivity is missing' })
-  @IsNotEmpty({ message: 'Required field target.sensitivity is missing' })
-  sensitivity!: string;
+  @ApiPropertyOptional({ example: '/api/search' })
+  @IsOptional()
+  @IsString()
+  api?: string;
 
-  @ApiProperty({ example: 'PUBLIC' })
-  @IsString({ message: 'Required field target.exposure is missing' })
-  @IsNotEmpty({ message: 'Required field target.exposure is missing' })
-  exposure!: string;
+  @ApiPropertyOptional({ example: 'SEARCH' })
+  @IsOptional()
+  @IsString()
+  operationType?: string;
+
+  @ApiPropertyOptional({ example: 'NORMAL' })
+  @IsOptional()
+  @IsString()
+  sensitivity?: string;
+
+  @ApiPropertyOptional({ example: 'PUBLIC' })
+  @IsOptional()
+  @IsString()
+  exposure?: string;
 }
 
 export class TimelineInputDto {
-  @ApiProperty({ example: '2026-09-19T01:02:00Z' })
+  @ApiProperty({ example: '2026-09-19T01:02:00.000Z' })
   @IsISO8601({}, { message: 'Required field timeline.startTime must be an ISO-8601 timestamp' })
   startTime!: string;
 
-  @ApiProperty({ example: '2026-09-19T01:06:00Z' })
+  @ApiProperty({ example: '2026-09-19T01:06:00.000Z' })
   @IsISO8601({}, { message: 'Required field timeline.endTime must be an ISO-8601 timestamp' })
   endTime!: string;
 }
@@ -100,21 +110,36 @@ export class MetricsInputDto {
   apiCount!: number;
 }
 
-export class MetadataInputDto {
-  @ApiProperty({ example: 14 })
-  @IsNumber({}, { message: 'Required field metadata.blockedCount is missing' })
+export class SourceBreakdownDto {
+  @ApiProperty({ example: 0, minimum: 0 })
+  @IsNumber({}, { message: 'Required field sourceBreakdown.agentEventCount is missing' })
   @Min(0)
-  blockedCount!: number;
+  agentEventCount!: number;
 
-  @ApiProperty({ example: 2 })
-  @IsNumber({}, { message: 'Required field metadata.nonBlockedCount is missing' })
-  @Min(0)
-  nonBlockedCount!: number;
-
-  @ApiProperty({ example: 16 })
-  @IsNumber({}, { message: 'Required field metadata.wafEventCount is missing' })
+  @ApiProperty({ example: 16, minimum: 0 })
+  @IsNumber({}, { message: 'Required field sourceBreakdown.wafEventCount is missing' })
   @Min(0)
   wafEventCount!: number;
+}
+
+export class MetadataInputDto {
+  @ApiPropertyOptional({ example: 14 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  blockedCount?: number;
+
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  nonBlockedCount?: number;
+
+  @ApiPropertyOptional({ example: 16 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  wafEventCount?: number;
 }
 
 export class AttackStoryInputDto {
@@ -161,24 +186,34 @@ export class RepresentativeEventDto {
   @IsNotEmpty({ message: 'Required field representativeEvents.source is missing' })
   source!: string;
 
-  @ApiProperty({ example: '2026-09-19T01:02:12Z' })
+  @ApiProperty({ example: '2026-09-19T01:02:12.000Z' })
   @IsISO8601({}, { message: 'Required field representativeEvents.occurredAt must be an ISO-8601 timestamp' })
   occurredAt!: string;
 
-  @ApiProperty({ example: '/api/search' })
-  @IsString({ message: 'Required field representativeEvents.path is missing' })
-  @IsNotEmpty({ message: 'Required field representativeEvents.path is missing' })
-  path!: string;
+  @ApiPropertyOptional({ example: 'GET' })
+  @IsOptional()
+  @IsString()
+  method?: string;
 
-  @ApiProperty({ example: 'BLOCKED' })
-  @IsString({ message: 'Required field representativeEvents.action is missing' })
-  @IsNotEmpty({ message: 'Required field representativeEvents.action is missing' })
-  action!: string;
+  @ApiPropertyOptional({ example: '/api/search' })
+  @IsOptional()
+  @IsString()
+  path?: string;
 
-  @ApiProperty({ example: 'WAF_XSS' })
-  @IsString({ message: 'Required field representativeEvents.signal is missing' })
-  @IsNotEmpty({ message: 'Required field representativeEvents.signal is missing' })
-  signal!: string;
+  @ApiPropertyOptional({ example: 'BLOCKED' })
+  @IsOptional()
+  @IsString()
+  action?: string;
+
+  @ApiPropertyOptional({ example: 'WAF_RULE_MATCH' })
+  @IsOptional()
+  @IsString()
+  signal?: string;
+
+  @ApiPropertyOptional({ example: 'AWS-AWSManagedRulesCommonRuleSet' })
+  @IsOptional()
+  @IsString()
+  wafRuleId?: string;
 }
 
 export class AnalyzeClusterDto {
@@ -188,11 +223,11 @@ export class AnalyzeClusterDto {
   @Type(() => ClusterInputDto)
   cluster!: ClusterInputDto;
 
-  @ApiProperty({ type: TargetInputDto })
-  @IsDefined({ message: 'Required field target is missing' })
+  @ApiPropertyOptional({ type: TargetInputDto })
+  @IsOptional()
   @ValidateNested()
   @Type(() => TargetInputDto)
-  target!: TargetInputDto;
+  target?: TargetInputDto;
 
   @ApiProperty({ type: TimelineInputDto })
   @IsDefined({ message: 'Required field timeline is missing' })
@@ -206,25 +241,37 @@ export class AnalyzeClusterDto {
   @Type(() => MetricsInputDto)
   metrics!: MetricsInputDto;
 
+  @ApiProperty({ type: SourceBreakdownDto })
+  @IsDefined({ message: 'Required field sourceBreakdown is missing' })
+  @ValidateNested()
+  @Type(() => SourceBreakdownDto)
+  sourceBreakdown!: SourceBreakdownDto;
+
   @ApiProperty({ type: [String], example: ['WAF_XSS'] })
   @IsArray({ message: 'Required field signals is missing' })
   @IsString({ each: true })
+  @ArrayMaxSize(20)
   signals!: string[];
 
   @ApiProperty({
     type: [String],
-    example: ['5 unique IP addresses', '16 XSS-related WAF events', '14 blocked by WAF', '2 not blocked by WAF'],
+    example: [
+      '5 unique IP addresses',
+      '16 XSS-related WAF events',
+      '14 blocked by WAF',
+      '2 not blocked by WAF',
+    ],
   })
   @IsArray({ message: 'Required field evidence is missing' })
   @IsString({ each: true })
   @ArrayMaxSize(50)
   evidence!: string[];
 
-  @ApiProperty({ type: MetadataInputDto })
-  @IsDefined({ message: 'Required field metadata is missing' })
+  @ApiPropertyOptional({ type: MetadataInputDto })
+  @IsOptional()
   @ValidateNested()
   @Type(() => MetadataInputDto)
-  metadata!: MetadataInputDto;
+  metadata?: MetadataInputDto;
 
   @ApiProperty({ type: AttackStoryInputDto })
   @IsDefined({ message: 'Required field attackStory is missing' })
@@ -237,6 +284,6 @@ export class AnalyzeClusterDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => RepresentativeEventDto)
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(10)
   representativeEvents?: RepresentativeEventDto[];
 }

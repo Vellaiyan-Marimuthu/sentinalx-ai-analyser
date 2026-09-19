@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiAnalyzerController } from './controllers/ai-analyzer.controller';
+import { AnalyzeController } from './controllers/analyze.controller';
 import { AiAnalysisEntity } from './entities/ai-analysis.entity';
 import { CreateAiAnalyses1726740000000 } from './migrations/1726740000000-CreateAiAnalyses';
 import { AiAnalyzerService } from './services/ai-analyzer.service';
@@ -28,7 +29,7 @@ import { AI_PROVIDER } from './types/ai-provider';
     }),
     TypeOrmModule.forFeature([AiAnalysisEntity]),
   ],
-  controllers: [AiAnalyzerController],
+  controllers: [AnalyzeController, AiAnalyzerController],
   providers: [
     AiAnalyzerService,
     AiContextBuilderService,

@@ -38,6 +38,24 @@ export class AnalysisNotFoundException extends AnalyzerException {
   }
 }
 
+export class AiProviderException extends AnalyzerException {
+  constructor(message = 'AI analysis provider unavailable') {
+    super('AI_PROVIDER_ERROR', HttpStatus.BAD_GATEWAY, message);
+  }
+}
+
+export class AiAnalysisTimeoutException extends AnalyzerException {
+  constructor(message = 'AI analysis timed out') {
+    super('AI_ANALYSIS_TIMEOUT', HttpStatus.GATEWAY_TIMEOUT, message);
+  }
+}
+
+export class InvalidAiResponseException extends AnalyzerException {
+  constructor(message = 'AI provider returned an invalid analysis payload') {
+    super('INVALID_AI_RESPONSE', HttpStatus.BAD_GATEWAY, message);
+  }
+}
+
 export class AiProviderError extends Error {
   constructor(message = 'AI analysis provider unavailable') {
     super(message);
