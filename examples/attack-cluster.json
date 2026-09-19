@@ -1,0 +1,38 @@
+{
+  "cluster": {
+    "type": "XSS_CAMPAIGN",
+    "severity": "HIGH",
+    "confidence": 0.87,
+    "startTime": "2026-09-19T01:02:00Z",
+    "endTime": "2026-09-19T01:06:00Z",
+    "requestCount": 16,
+    "ipCount": 5,
+    "userCount": 0,
+    "targetApi": "/api/search",
+    "signals": ["WAF_XSS"]
+  },
+  "apiContext": {
+    "method": "GET",
+    "operationType": "SEARCH",
+    "sensitivity": "NORMAL",
+    "exposure": "PUBLIC"
+  },
+  "wafEvidence": {
+    "eventCount": 16,
+    "blockedCount": 14,
+    "nonBlockedCount": 2,
+    "ruleIds": ["AWS-AWSManagedRulesCommonRuleSet"],
+    "labels": ["XSS-related-label"]
+  },
+  "agentEvidence": {
+    "eventCount": 0,
+    "violations": []
+  },
+  "correlationEvidence": [
+    "5 unique source IPs",
+    "16 XSS-related WAF events",
+    "same target API",
+    "events occurred within 5 minutes"
+  ],
+  "deterministicStory": "SentinelX correlated 16 XSS-related requests from 5 IP addresses targeting /api/search within five minutes. AWS WAF blocked 14 requests while 2 were not blocked."
+}
