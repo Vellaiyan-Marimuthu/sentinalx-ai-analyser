@@ -6,6 +6,7 @@ export class AnalyzerException extends HttpException {
     status: HttpStatus,
     message?: string,
   ) {
+    
     super(
       {
         success: false,
