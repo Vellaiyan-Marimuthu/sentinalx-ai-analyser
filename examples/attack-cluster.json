@@ -1,38 +1,67 @@
 {
   "cluster": {
+    "id": "cluster-uuid",
     "type": "XSS_CAMPAIGN",
     "severity": "HIGH",
     "confidence": 0.87,
-    "startTime": "2026-09-19T01:02:00Z",
-    "endTime": "2026-09-19T01:06:00Z",
-    "requestCount": 16,
-    "ipCount": 5,
-    "userCount": 0,
-    "targetApi": "/api/search",
-    "signals": ["WAF_XSS"]
+    "status": "OPEN"
   },
-  "apiContext": {
-    "method": "GET",
+  "target": {
+    "api": "/api/search",
     "operationType": "SEARCH",
     "sensitivity": "NORMAL",
     "exposure": "PUBLIC"
   },
-  "wafEvidence": {
-    "eventCount": 16,
+  "timeline": {
+    "startTime": "2026-09-19T01:02:00Z",
+    "endTime": "2026-09-19T01:06:00Z"
+  },
+  "metrics": {
+    "requestCount": 16,
+    "ipCount": 5,
+    "userCount": 0,
+    "apiCount": 1
+  },
+  "signals": ["WAF_XSS"],
+  "evidence": [
+    "5 unique IP addresses",
+    "16 XSS-related WAF events",
+    "14 blocked by WAF",
+    "2 not blocked by WAF"
+  ],
+  "metadata": {
     "blockedCount": 14,
     "nonBlockedCount": 2,
-    "ruleIds": ["AWS-AWSManagedRulesCommonRuleSet"],
-    "labels": ["XSS-related-label"]
+    "wafEventCount": 16
   },
-  "agentEvidence": {
-    "eventCount": 0,
-    "violations": []
+  "attackStory": {
+    "headline": "XSS campaign detected",
+    "summary": "SentinelX correlated 16 XSS-related requests from 5 IP addresses targeting /api/search within five minutes. AWS WAF blocked 14 requests while 2 were not blocked.",
+    "timelineSummary": "Activity occurred between 01:02 and 01:06 UTC.",
+    "evidenceSummary": [
+      "16 XSS-related WAF events",
+      "5 unique source IPs",
+      "14 blocked and 2 not blocked"
+    ],
+    "recommendedInvestigation": [
+      "Review the two non-blocked requests",
+      "Inspect output encoding on /api/search"
+    ]
   },
-  "correlationEvidence": [
-    "5 unique source IPs",
-    "16 XSS-related WAF events",
-    "same target API",
-    "events occurred within 5 minutes"
-  ],
-  "deterministicStory": "SentinelX correlated 16 XSS-related requests from 5 IP addresses targeting /api/search within five minutes. AWS WAF blocked 14 requests while 2 were not blocked."
+  "representativeEvents": [
+    {
+      "source": "AWS_WAF",
+      "occurredAt": "2026-09-19T01:02:12Z",
+      "path": "/api/search",
+      "action": "BLOCKED",
+      "signal": "WAF_XSS"
+    },
+    {
+      "source": "AWS_WAF",
+      "occurredAt": "2026-09-19T01:05:41Z",
+      "path": "/api/search",
+      "action": "ALLOWED",
+      "signal": "WAF_XSS"
+    }
+  ]
 }

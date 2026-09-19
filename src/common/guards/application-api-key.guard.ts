@@ -4,27 +4,30 @@ import { timingSafeEqual } from 'crypto';
 import { Request } from 'express';
 import { UnauthorizedAnalyzerException } from '../exceptions/analyzer.exceptions';
 
+export type AuthenticatedRequest = Request & {
+  applicationId: string;
+};
+
 @Injectable()
-export class InternalServiceGuard implements CanActivate {
+export class ApplicationApiKeyGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const expected = this.configService.get<string>('auth.internalServiceToken') ?? '';
-    if (!expected) {
-      throw new UnauthorizedAnalyzerException('Internal service token is not configured');
+    const expected = this.configService.get<string>('auth.applicationApiKey') ?? '';
+    const applicationId = this.configService.get<string>('auth.applicationId') ?? '';
+
+    if (!expected || !applicationId) {
+      throw new UnauthorizedAnalyzerException('Application API key is not configured');
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const header = request.headers.authorization ?? '';
-    if (!header.startsWith('Bearer ')) {
-      throw new UnauthorizedAnalyzerException();
-    }
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const provided = String(request.headers['x-api-key'] ?? '');
 
-    const provided = header.slice('Bearer '.length);
     if (!safeEqual(provided, expected)) {
       throw new UnauthorizedAnalyzerException();
     }
 
+    request.applicationId = applicationId;
     return true;
   }
 }

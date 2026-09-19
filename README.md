@@ -1,10 +1,8 @@
 # SentinelX AI Analyzer Service
 
-> The correlation engine decides what events belong together; AI explains what that incident means and recommends what an analyst should investigate or consider doing.
+Deterministic systems decide what happened. AI helps humans understand what it means and what to investigate.
 
-NestJS microservice that accepts an already-correlated **Attack Cluster**, builds a controlled prompt from supplied evidence, calls **OpenAI GPT-4o** (Omni 4.0), validates the structured response, and returns an advisory investigation analysis.
-
-It does **not** detect attacks, correlate events, block traffic, or deploy policies.
+The AI Analyzer sits after the Correlation Engine and Attack Clusters. It does **not** detect attacks, change severity or confidence, or enforce policies.
 
 ## Quick start
 
@@ -14,68 +12,65 @@ npm install
 npm run start:dev
 ```
 
-Health check:
+## API
+
+Authenticate every request with:
 
 ```http
-GET /api/v1/health
+x-api-key: APPLICATION_API_KEY
 ```
 
-Analyze an incident:
+Analyze a persisted cluster:
 
 ```http
-POST /api/v1/ai/analyze
-Content-Type: application/json
-Authorization: Bearer <INTERNAL_SERVICE_TOKEN>
+POST /api/v1/ai-analyzer/clusters/:clusterId/analyze
 ```
 
-A ready-to-send payload lives in `examples/attack-cluster.json`.
+Get the latest analysis:
+
+```http
+GET /api/v1/ai-analyzer/clusters/:clusterId
+```
+
+Regenerate from the stored snapshot or a new payload:
+
+```http
+POST /api/v1/ai-analyzer/clusters/:clusterId/reanalyze
+```
+
+A ready-to-send XSS campaign payload lives in `examples/attack-cluster.json`.
 
 ```bash
 npm run demo
 ```
 
-For a local demo without an OpenAI key, set:
+Swagger UI: [http://localhost:3005/api/docs](http://localhost:3005/api/docs)
 
-```env
-AI_PROVIDER=mock
-```
+Use **Authorize** and set `x-api-key` to `APPLICATION_API_KEY` before trying the analyzer endpoints.
 
-For OpenAI GPT-4o (Omni 4.0):
+## Environment
 
 ```env
 AI_PROVIDER=openai
+AI_MODEL=gpt-4o
+AI_TEMPERATURE=0
 OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4o
+APPLICATION_API_KEY=sentinelx-app-key
+APPLICATION_ID=app_sentinelx
 ```
 
-## What the service returns
+## What the analyzer returns
 
-The analyzer wraps the model output:
+Structured JSON only:
 
+- Executive summary
 - What happened
 - Why it matters
-- Potential impact
+- Evidence assessment
 - Investigation steps
 - Advisory recommendations
-- Suggested policy
 - Limitations
 
-Recommendations are advisory only. This service never executes them.
+If the model fails, the Attack Cluster stays usable and the API returns `status: FAILED` with a fallback pointing back to the deterministic attack story.
 
-## Error contract
-
-| Condition | Status | Code |
-| --- | --- | --- |
-| Invalid Attack Cluster | 400 | `INVALID_ANALYSIS_REQUEST` |
-| Missing/invalid service token | 401 | `UNAUTHORIZED` |
-| Omni unavailable | 502 | `AI_PROVIDER_ERROR` |
-| Malformed or schema-invalid AI JSON | 502 | `INVALID_AI_RESPONSE` |
-| Omni timeout | 504 | `AI_ANALYSIS_TIMEOUT` |
-
-## Security boundaries
-
-- Passwords, Authorization headers, cookies, credentials, and raw request bodies are stripped and never sent to the model.
-- Incident fields are wrapped as untrusted evidence and must not be treated as instructions.
-- The official cluster confidence score is never overwritten.
-- AI output is JSON-parsed, schema-validated, and rejected if it claims to have executed a control.
+Analyses are persisted in SQLite (`data/sentinelx.sqlite`) and scoped by `applicationId`.

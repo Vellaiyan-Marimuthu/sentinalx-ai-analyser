@@ -1,21 +1,24 @@
 export default () => ({
   port: parseInt(process.env.PORT ?? '3005', 10),
-  aiProvider: process.env.AI_PROVIDER ?? 'openai',
+  ai: {
+    provider: process.env.AI_PROVIDER ?? 'openai',
+    model: process.env.AI_MODEL || process.env.OPENAI_MODEL || 'gpt-4o',
+    temperature: Number(process.env.AI_TEMPERATURE ?? '0'),
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS ?? process.env.OPENAI_TIMEOUT_MS ?? '30000', 10),
+    maxRetries: parseInt(process.env.AI_MAX_RETRIES ?? '1', 10),
+    promptVersion: process.env.PROMPT_VERSION ?? '1.0',
+    analysisVersion: '1.0',
+    maxRepresentativeEvents: 20,
+  },
   openai: {
-    apiKey: process.env.OPENAI_API_KEY || process.env.OMNI_API_KEY || '',
-    baseUrl: process.env.OPENAI_BASE_URL || process.env.OMNI_BASE_URL || 'https://api.openai.com/v1',
-    model: process.env.OPENAI_MODEL || process.env.OMNI_MODEL || 'gpt-4o',
-    timeoutMs: parseInt(
-      process.env.OPENAI_TIMEOUT_MS || process.env.OMNI_TIMEOUT_MS || '30000',
-      10,
-    ),
-    maxRetries: parseInt(
-      process.env.OPENAI_MAX_RETRIES || process.env.OMNI_MAX_RETRIES || '2',
-      10,
-    ),
+    apiKey: process.env.OPENAI_API_KEY ?? '',
+    baseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
   },
   auth: {
-    internalServiceToken: process.env.INTERNAL_SERVICE_TOKEN ?? '',
+    applicationApiKey: process.env.APPLICATION_API_KEY ?? '',
+    applicationId: process.env.APPLICATION_ID ?? 'app_sentinelx',
   },
-  analysisVersion: '1.0',
+  database: {
+    path: process.env.DATABASE_PATH ?? 'data/sentinelx.sqlite',
+  },
 });
